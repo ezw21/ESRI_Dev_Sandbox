@@ -57,12 +57,39 @@
                     topoLayer
                 ]
             });
+            const popupHuts = {
+                "content": "<img src={introductionThumbnail} /><br />" +
+                    "<h1>{name}</h1><i>{place}, {region}</i><br /><br />" +
+                    "<b>Facilities:</b> {facilities}<br />" +
+                    "<b>Status:</b> {status}<br />" +
+                    "<b>Bookable:</b> {bookable}<br />" +
+                    "<a href='{staticLink}'>More Info</a>"
+            }
+            const labelHuts = {
+                // autocasts as new LabelClass()
+                symbol: {
+                    type: "text", // autocasts as new TextSymbol()
+                    color: [43, 43, 43, 255],
+                    font: {
+                        // autocast as new Font()
+                        weight: "bold"
+                    },
+                    haloSize: 1,
+                    haloColor: "white"
+                },
+                labelPlacement: "below-center",
+                labelExpressionInfo: {
+                    expression: "$feature.name"
+                }
+            };
             //Trailheads feature layer (points)
             const DocTracks = new FeatureLayer({
-                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks/FeatureServer"
+                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks/FeatureServer",
             });
             const DocHuts = new FeatureLayer({
-                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer"
+                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer",
+                outFields: ["name", "place", "facilities", "status", "bookable"],
+                popupTemplate: popupHuts
             })
             const map = new Map({
                 basemap: basemap2D, // Basemap layer service
@@ -74,7 +101,6 @@
                 zoom: 10, // Zoom level
                 container: "viewDiv", // Div element 
             });
-
 
             map.add(DocTracks);
             map.add(DocHuts);
