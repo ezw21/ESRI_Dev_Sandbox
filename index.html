@@ -19,40 +19,67 @@
     <script src="https://js.arcgis.com/4.22/"></script>
 
     <script>
-        require(["esri/config", "esri/Map", "esri/views/MapView", "esri/Basemap",
-            "esri/layers/VectorTileLayer", "esri/layers/TileLayer"], function (esriConfig, Map, MapView, Basemap, VectorTileLayer, TileLayer) {
-                esriConfig.apiKey = "AAPKd3d36a501688402890a62185f3d7b167aYJzN4UAyAl4YE0buEgVJTWr_3TG1LenQlVYhzuszgEA2AUQ9XUfq9PF1c8lqyCf";
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Basemap",
+            "esri/layers/VectorTileLayer",
+            "esri/layers/TileLayer",
+            "esri/geometry/Point",
+            "esri/layers/FeatureLayer"
+        ], function (
+            esriConfig,
+            Map,
+            MapView,
+            Basemap,
+            VectorTileLayer,
+            TileLayer,
+            Point,
+            FeatureLayer
+        ) {
+            esriConfig.apiKey = "AAPKd3d36a501688402890a62185f3d7b167aYJzN4UAyAl4YE0buEgVJTWr_3TG1LenQlVYhzuszgEA2AUQ9XUfq9PF1c8lqyCf";
 
-                const vectorTileLayer = new VectorTileLayer({
-                    portalItem: {
-                        id: "6976148c11bd497d8624206f9ee03e30" // Forest and Parks Canvas
-                    },
-                    opacity: .75
-                });
-                const imageTileLayer = new TileLayer({
-                    portalItem: {
-                        id: "1b243539f4514b6ba35e7d995890db1d" // World Hillshade
-                    }
-                });
-                const basemap = new Basemap({
-                    baseLayers: [
-
-                        imageTileLayer,
-                        vectorTileLayer
-
-                    ]
-                });
-                const map = new Map({
-                    basemap: basemap // Basemap layer service
-                });
-                const view = new MapView({
-                    map: map,
-                    center: [-100, 40], // Longitude, latitude
-                    zoom: 3, // Zoom level
-                    container: "viewDiv" // Div element
-                });
-
+            const topoLayer = new VectorTileLayer({
+                portalItem: {
+                    id: "734c12e9904b4a8086d2dff8582a93a1" // Forest and Parks Canvas
+                },
+                opacity: .75
             });
+            const hillshadeLayer = new TileLayer({
+                portalItem: {
+                    id: "38c860f8dbd24820b2a59ccc9a3dabdb" // NZ Hillshade
+                }
+            });
+            const basemap2D = new Basemap({
+                baseLayers: [
+                    hillshadeLayer,
+                    topoLayer
+                ]
+            });
+            //Trailheads feature layer (points)
+            const DocTracks = new FeatureLayer({
+                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks/FeatureServer"
+            });
+            const DocHuts = new FeatureLayer({
+                url: "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer"
+            })
+            const map = new Map({
+                basemap: basemap2D, // Basemap layer service
+                layers: [DocTracks, DocHuts]
+            });
+            const view = new MapView({
+                map: map,
+                center: new Point({ x: 1796000, y: 5457400, spatialReference: { wkid: 2193 } }), // nztm coordinates
+                zoom: 10, // Zoom level
+                container: "viewDiv", // Div element 
+            });
+
+
+            map.add(DocTracks);
+            map.add(DocHuts);
+
+        });
     </script>
 
 </head>
