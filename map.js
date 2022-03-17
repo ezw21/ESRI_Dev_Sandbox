@@ -12,6 +12,7 @@ require([
   "esri/widgets/ElevationProfile",
   "esri/widgets/BasemapGallery",
   "esri/widgets/LayerList",
+  "esri/layers/ImageryTileLayer",
 ], function (
   esriConfig,
   Map,
@@ -25,7 +26,8 @@ require([
   ElevationLayer,
   ElevationProfile,
   BasemapGallery,
-  LayerList
+  LayerList,
+  ImageryTileLayer
 ) {
   esriConfig.apiKey =
     "AAPKd3d36a501688402890a62185f3d7b167aYJzN4UAyAl4YE0buEgVJTWr_3TG1LenQlVYhzuszgEA2AUQ9XUfq9PF1c8lqyCf";
@@ -113,9 +115,20 @@ require([
       id: "2ce4fe7d77024e719f8a04d2155b3fd2",
     },
   });
+  const windForecast = new ImageryTileLayer({
+    url: "https://tiledimageservices.arcgis.com/hLRlshaEMEYQG5A8/arcgis/rest/services/vector_field_layer/ImageServer",
+    title: "Wind",
+    renderer: {
+      type: "animated-flow", // autocasts to new AnimatedFlowRenderer
+      lineWidth: "2px",
+      lineColor: [50, 120, 240],
+      density: 0.5,
+    },
+    effect: "blloom(2, 0.25px, 0)",
+  });
   const map = new Map({
     basemap: basemap2D, // Basemap layer service
-    layers: [DocTracks, DocHuts],
+    layers: [DocTracks, DocHuts, windForecast],
     ground: {
       layers: [elevationLayer],
     },
@@ -129,7 +142,11 @@ require([
     }), // nztm coordinates
     zoom: 10, // Zoom level
     container: "viewDiv", // Div element
+    padding: {
+      left: 49,
+    },
   });
+
   const locate = new Locate({
     view: view,
     useHeadingEnabled: false,
@@ -138,7 +155,6 @@ require([
       return view.goTo(options.target);
     },
   });
-  view.ui.add(locate, "top-left");
 
   map.add(DocTracks);
   map.add(DocHuts);
@@ -146,15 +162,16 @@ require([
   const elevationProfile = new ElevationProfile({
     view: view,
     profiles: [{ type: "ground" }],
-  });
-  view.when(function () {
-    view.ui.add(elevationProfile);
+    container: "profile",
   });
   const basemapGallery = new BasemapGallery({
     view: view,
     source: [topoBasemap, linzBasemap, imageryBasemap],
   });
+  //   view.ui.add(elevationProfile);
   view.ui.add(basemapGallery, "top-right");
+  view.ui.add(locate, "top-right");
+
   view.when(() => {
     const layerList = new LayerList({
       view: view,
@@ -162,5 +179,38 @@ require([
 
     // Add widget to the top right corner of the view
     view.ui.add(layerList, "top-right");
+
+    let activeWidget;
+
+    // here we define the code which should run when our action bar is clicked
+    const handleActionBarClick = ({ target }) => {
+      // make sure we are clicking on a calcite action button
+      if (target.tagName !== "CALCITE-ACTION") {
+        return;
+      }
+
+      // check if there is an active widget and if so hide it
+      if (activeWidget) {
+        document.querySelector(
+          `[data-action-id=${activeWidget}]`
+        ).active = false;
+        document.querySelector(`[data-panel-id=${activeWidget}]`).hidden = true;
+      }
+
+      // determine which widget button was clicked. If it's the button for the currently active widget
+      // then we just set the active widget to null (as we already hid it), else we hide the current widget and show the next
+      const nextWidget = target.dataset.actionId;
+      if (nextWidget !== activeWidget) {
+        document.querySelector(`[data-action-id=${nextWidget}]`).active = true;
+        document.querySelector(`[data-panel-id=${nextWidget}]`).hidden = false;
+        activeWidget = nextWidget;
+      } else {
+        activeWidget = null;
+      }
+    };
+    // here we actually add the code to the action bar
+    document
+      .querySelector("calcite-action-bar")
+      .addEventListener("click", handleActionBarClick);
   });
 });
